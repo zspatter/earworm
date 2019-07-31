@@ -17,15 +17,14 @@ def get_earworm(sheet):
 
 
 if __name__ == '__main__':
-    access_token = '9AiiRUL69iJ7jO8stow640XH6aA6S1InzcSOkqMBlb8P9SaNcE7Zdeg9dmCR__mI'
-    genius = lyricsgenius.Genius(access_token)
-    bitly_access = {'bitly_token': 'e798f491e39bf027e18f4f5f9898623f02c7e3df'}
+    genius_token = '***'
+    genius = lyricsgenius.Genius(genius_token)
+    bitly_access = {'bitly_token': '***'}
 
     wb = openpyxl.load_workbook(Path('./earworms/earworms.xlsx'))
     ws = wb.active
 
     title, artist, earworm = get_earworm(ws)
-    # url = 'https://genius.com/Nirvana-smells-like-teen-spirit-lyrics'
     song = genius.search_song(title=title, artist=artist)
     print(song._url)
 
@@ -34,4 +33,3 @@ if __name__ == '__main__':
     print(short_url)
 
     text_myself(message=f'{earworm}\n{short_url}')
-    print(f'\n{earworm}\n{short_url}')
