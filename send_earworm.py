@@ -40,9 +40,16 @@ def shorten_link(long_url, access_token):
 
 def send_sms(client, message):
     sender = environ.get('TWILIO_NUMBER')
-    recipient = environ.get('MY_NUMBER')
+    recipient = environ.get('RECIPIENT')
 
     client.messages.create(body=message, from_=sender, to=recipient)
+
+
+def build_message(lyrics, url, emoji='🎶🎵🎶'):
+    return f'{emoji}' \
+        f'\n{lyrics}' \
+        f'\n{emoji}' \
+        f'\n{url}'
 
 
 def send_earworm(sheet, genius, access_token, twilio):
@@ -50,10 +57,9 @@ def send_earworm(sheet, genius, access_token, twilio):
     original_url = get_genius_link(genius=genius,
                                    title=song_title,
                                    artist=song_artist)
-    short_url = shorten_link(long_url=original_url,
-                             access_token=access_token)
-    send_sms(client=twilio,
-             message=f'{earworm_lyrics}\n{short_url}')
+    short_url = shorten_link(long_url=original_url, access_token=access_token)
+    earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
+    send_sms(client=twilio, message=earworm_message)
 
 
 if __name__ == '__main__':
