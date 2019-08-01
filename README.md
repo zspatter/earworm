@@ -5,5 +5,5 @@ This script chooses a random song from a predefined library of earworms. Once th
 
 ## Sample Earworm Message
 <p align=center>
-  <img src=./sample_message.jpeg alt=sample earworm message>
+  <img src=./sample_message.jpeg alt=sample earworm message height=750>
 </p>
