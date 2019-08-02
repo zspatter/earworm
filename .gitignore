@@ -1,3 +1,4 @@
 .DS_Store
 .idea/
 .mypy_cache/
+send_earworms/send_earworm.log
