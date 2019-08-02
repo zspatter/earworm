@@ -137,4 +137,4 @@ if __name__ == '__main__':
                  genius=genius_client,
                  access_token=bitly_token,
                  twilio=twilio_client,
-                 recipient=environ.get('MY_NUMBER'))
+                 recipient=environ.get('RECIPIENT'))
