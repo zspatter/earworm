@@ -34,7 +34,7 @@ def get_earworm(sheet):
     title = sheet.cell(row=row, column=1).value.strip()
     artist = sheet.cell(row=row, column=2).value.strip()
     earworm = sheet.cell(row=row, column=3).value.strip()
-    logging.info(f'{artist} - {title}')
+    logging.info(f'{artist} - "{title}"')
 
     return title, artist, earworm
 
