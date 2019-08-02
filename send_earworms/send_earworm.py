@@ -59,7 +59,7 @@ def schedule_earworms(lower_bound, upper_bound):
         try:
             if is_available():
                 schedule.run_pending()
-            sleep(30)
+            sleep(60)
         except Exception as e:
             logging.exception(e)
 
@@ -195,4 +195,4 @@ if __name__ == '__main__':
     wb = openpyxl.load_workbook(Path('./earworm_library/earworms.xlsx'))
     ws = wb.active
 
-    schedule_earworms(lower_bound=90, upper_bound=4 * 60)
+    schedule_earworms(lower_bound=90, upper_bound=5 * 60)
