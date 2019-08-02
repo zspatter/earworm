@@ -1,3 +1,4 @@
+import logging
 import random
 from os import environ
 from pathlib import Path
@@ -18,6 +19,7 @@ def get_clients():
 
     genius = lyricsgenius.Genius(genius_token)
     twilio = Client(account_sid, auth_token)
+    logging.debug(f'Clients for Genius and Twilio created')
 
     return genius, twilio
 
@@ -32,6 +34,7 @@ def get_earworm(sheet):
     title = sheet.cell(row=row, column=1).value.strip()
     artist = sheet.cell(row=row, column=2).value.strip()
     earworm = sheet.cell(row=row, column=3).value.strip()
+    logging.info(f'{artist} - {title}')
 
     return title, artist, earworm
 
@@ -45,7 +48,9 @@ def get_genius_link(genius, title, artist):
     :param str title: name of song
     :param str artist: name of artist
     """
-    return genius.search_song(title=title, artist=artist).url
+    url = genius.search_song(title=title, artist=artist).url
+    logging.debug(f'Genius URL for {artist} - {title}: {url}')
+    return url
 
 
 def shorten_link(long_url, access_token):
@@ -57,8 +62,10 @@ def shorten_link(long_url, access_token):
     :param dict access_token: access token for bitly
     """
     shortener = Shortener(Shorteners.BITLY, **access_token)
+    short_url = shortener.short(long_url)
+    logging.debug(f'{long_url} shortened to {short_url}')
 
-    return shortener.short(long_url)
+    return short_url
 
 
 def send_sms(client, message, recipient):
@@ -72,6 +79,7 @@ def send_sms(client, message, recipient):
     """
     sender = environ.get('TWILIO_NUMBER')
     client.messages.create(body=message, from_=sender, to=recipient)
+    logging.info(f'Earworm sent to recipient')
 
 
 def build_message(lyrics, url, emoji='🎶🎵🎶'):
@@ -102,6 +110,7 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     :param Client twilio: twilio client used to send message
     :param str recipient: recipient's phone number
     """
+    logging.info(f'Gathering earworm')
     song_title, song_artist, earworm_lyrics = get_earworm(sheet)
     original_url = get_genius_link(genius=genius,
                                    title=song_title,
@@ -112,6 +121,13 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename=f'{Path(__file__).stem}.log',
+                        level=logging.INFO,
+                        format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
+                               '<%(funcName)s>: %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.getLogger("twilio").setLevel(logging.WARNING)
+
     bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
     genius_client, twilio_client = get_clients()
 
@@ -121,4 +137,4 @@ if __name__ == '__main__':
                  genius=genius_client,
                  access_token=bitly_token,
                  twilio=twilio_client,
-                 recipient=environ.get('RECIPIENT'))
+                 recipient=environ.get('MY_NUMBER'))
