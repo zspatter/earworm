@@ -77,7 +77,6 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     :param Client twilio: twilio client used to send message
     :param str recipient: recipient's phone number
     """
-    # if is_available():
     logging.info(f'Gathering earworm')
     song_title, song_artist, earworm_lyrics = get_earworm(sheet)
     original_url = get_genius_link(genius=genius,
@@ -174,7 +173,6 @@ def is_available():
     """
     Checks if current time is within availability range
     """
-    # return 9 <= get_edt_time().hour <= 23
     start = time(hour=9, minute=0, second=0, tzinfo=timezone('US/Eastern'))
     end = time(hour=23, minute=0, second=0, tzinfo=timezone('US/Eastern'))
     return start <= get_edt_time().time() <= end
