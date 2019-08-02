@@ -1,11 +1,13 @@
 import logging
 import random
+from datetime import datetime
 from os import environ
 from pathlib import Path
 
 import lyricsgenius
 import openpyxl
 from pyshorteners import Shortener, Shorteners
+from pytz import timezone, utc
 from twilio.rest import Client
 
 
@@ -68,20 +70,6 @@ def shorten_link(long_url, access_token):
     return short_url
 
 
-def send_sms(client, message, recipient):
-    """
-    Using the provided twilio client, the given message is transmitted
-    to the recipient via SMS
-
-    :param Client client: twilio client used to send message
-    :param str message: message body
-    :param str recipient: recipient's phone number
-    """
-    sender = environ.get('TWILIO_NUMBER')
-    client.messages.create(body=message, from_=sender, to=recipient)
-    logging.info(f'Earworm sent to recipient')
-
-
 def build_message(lyrics, url, emoji='🎶🎵🎶'):
     """
     Builds a message body by padding either side of the earworm lyrics with
@@ -95,6 +83,20 @@ def build_message(lyrics, url, emoji='🎶🎵🎶'):
         f'\n{lyrics}' \
         f'\n{emoji}' \
         f'\n{url}'
+
+
+def send_sms(client, message, recipient):
+    """
+    Using the provided twilio client, the given message is transmitted
+    to the recipient via SMS
+
+    :param Client client: twilio client used to send message
+    :param str message: message body
+    :param str recipient: recipient's phone number
+    """
+    sender = environ.get('TWILIO_NUMBER')
+    client.messages.create(body=message, from_=sender, to=recipient)
+    logging.info(f'Earworm sent to recipient')
 
 
 def send_earworm(sheet, genius, access_token, twilio, recipient):
@@ -120,12 +122,23 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     send_sms(client=twilio, message=earworm_message, recipient=recipient)
 
 
+def edt_time(*args):
+    """
+    Converts time to EDT (regardless of local time)
+    """
+    utc_dt = utc.localize(datetime.utcnow())
+    timezone_ = timezone('US/Eastern')
+    converted_time = utc_dt.astimezone(tz=timezone_)
+    return converted_time.timetuple()
+
+
 if __name__ == '__main__':
     logging.basicConfig(filename=f'{Path(__file__).stem}.log',
                         level=logging.INFO,
                         format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
                                '<%(funcName)s>: %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
+    logging.Formatter.converter = edt_time
     logging.getLogger("twilio").setLevel(logging.WARNING)
 
     bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
@@ -137,4 +150,5 @@ if __name__ == '__main__':
                  genius=genius_client,
                  access_token=bitly_token,
                  twilio=twilio_client,
-                 recipient=environ.get('RECIPIENT'))
+                 recipient=environ.get('RECIPIENT'
+                                       ''))
