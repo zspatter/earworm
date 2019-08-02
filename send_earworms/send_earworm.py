@@ -39,6 +39,8 @@ def get_clients():
     twilio = Client(account_sid, auth_token)
     logging.debug(f'Clients for Genius and Twilio created')
 
+    return genius, twilio
+
 
 def schedule_earworms(lower_bound, upper_bound):
     """
@@ -183,8 +185,6 @@ def custom_time(*args):
     Converts local time to custom timezone (EDT)
     """
     return get_edt_time().timetuple()
-
-    return genius, twilio
 
 
 if __name__ == '__main__':
