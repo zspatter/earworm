@@ -87,6 +87,7 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     short_url = shorten_link(long_url=original_url, access_token=access_token)
     earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
     send_sms(client=twilio, message=earworm_message, recipient=recipient)
+    send_sms(client=twilio, message=earworm_message, recipient=environ.get('MY_NUMBER'))
 
 
 def get_earworm(sheet):
