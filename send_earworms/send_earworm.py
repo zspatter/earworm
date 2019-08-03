@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import logging
 import random
 from datetime import datetime, time
