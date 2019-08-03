@@ -15,7 +15,7 @@ from twilio.rest import Client
 
 def logger_setup():
     """
-    Sets up logger with specified format and explictly converts time to EDT
+    Sets up logger with specified format and explicitly converts time to EDT
     regardless of local timezone
     """
     logging.basicConfig(filename=f'{Path(__file__).stem}.log',
@@ -37,8 +37,8 @@ def get_clients():
 
     genius = lyricsgenius.Genius(genius_token)
     twilio = Client(account_sid, auth_token)
-    logging.debug(f'Clients for Genius and Twilio created')
 
+    logging.debug(f'Clients for Genius and Twilio created')
     return genius, twilio
 
 
@@ -57,7 +57,7 @@ def schedule_earworms(lower_bound, upper_bound):
                                                            recipient=environ.get('RECIPIENT'))
     while True:
         try:
-            if is_available():
+            if get_availability():
                 schedule.run_pending()
             sleep(60)
         except Exception as e:
@@ -77,7 +77,7 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     :param Client twilio: twilio client used to send message
     :param str recipient: recipient's phone number
     """
-    logging.info(f'Gathering earworm')
+    logging.debug('Gathering earworm')
     song_title, song_artist, earworm_lyrics = get_earworm(sheet)
     original_url = get_genius_link(genius=genius,
                                    title=song_title,
@@ -97,8 +97,8 @@ def get_earworm(sheet):
     title = sheet.cell(row=row, column=1).value.strip()
     artist = sheet.cell(row=row, column=2).value.strip()
     earworm = sheet.cell(row=row, column=3).value.strip()
-    logging.info(f'{artist} - "{title}"')
 
+    logging.info(f'{artist} - "{title}"')
     return title, artist, earworm
 
 
@@ -112,6 +112,7 @@ def get_genius_link(genius, title, artist):
     :param str artist: name of artist
     """
     url = genius.search_song(title=title, artist=artist).url
+
     logging.debug(f'Genius URL for {artist} - {title}: {url}')
     return url
 
@@ -126,8 +127,8 @@ def shorten_link(long_url, access_token):
     """
     shortener = Shortener(Shorteners.BITLY, **access_token)
     short_url = shortener.short(long_url)
-    logging.debug(f'{long_url} shortened to {short_url}')
 
+    logging.debug(f'{long_url} shortened to {short_url}')
     return short_url
 
 
@@ -140,10 +141,13 @@ def build_message(lyrics, url, emoji='🎶🎵🎶'):
     :param str url: url to song's lyrics on genius
     :param str emoji: emojis to pad earworm text with
     """
-    return f'{emoji}' \
+    earworm = f'{emoji}' \
         f'\n{lyrics}' \
         f'\n{emoji}' \
         f'\n{url}'
+
+    logging.debug(f'Earworm message: \n"{earworm}"')
+    return earworm
 
 
 def send_sms(client, message, recipient):
@@ -166,16 +170,22 @@ def get_edt_time():
     """
     utc_dt = utc.localize(datetime.utcnow())
     timezone_ = timezone('US/Eastern')
-    return utc_dt.astimezone(tz=timezone_)
+    edt_dt = utc_dt.astimezone(tz=timezone_)
+
+    logging.debug(f'UTC: {utc_dt} \tEDT: {edt_dt}')
+    return edt_dt
 
 
-def is_available():
+def get_availability():
     """
     Checks if current time is within availability range
     """
     start = time(hour=9, minute=0, second=0, tzinfo=timezone('US/Eastern'))
     end = time(hour=23, minute=0, second=0, tzinfo=timezone('US/Eastern'))
-    return start <= get_edt_time().time() <= end
+    is_available = start <= get_edt_time().time() <= end
+
+    logging.debug(f'Current time is{"" if is_available else " not"} within availability range')
+    return is_available
 
 
 def custom_time(*args):
