@@ -1,4 +1,5 @@
 .DS_Store
 .idea/
 .mypy_cache/
-send_earworms/send_earworm.log
+send_earworms/*.log
+send_earworms/nohup.out
