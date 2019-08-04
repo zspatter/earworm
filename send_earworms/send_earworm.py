@@ -15,38 +15,31 @@ from pytz import timezone, utc
 from twilio.rest import Client
 
 
-def logger_setup():
+def run_schedule(lower_bound, upper_bound):
     """
-    Sets up logger with specified format and explicitly converts time to EDT
-    regardless of local timezone
+    Executes scheduled jobs when jobs are available. If an exception is
+    encountered, the details are logged and the job queue is cancelled and
+    restarted (to prevent constant retries)
+
+    :param int lower_bound: lower bound of interval (in minutes)
+    :param int upper_bound: upper bound of interval (in minutes)
     """
-    logging.basicConfig(filename=f'{Path(__file__).stem}.log',
-                        level=logging.INFO,
-                        format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
-                               '<%(funcName)s>: %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
-    logging.Formatter.converter = custom_time
-    logging.getLogger("twilio").setLevel(logging.WARNING)
+    schedule_job(lower_bound, upper_bound)
+
+    while True:
+        try:
+            schedule.run_pending()
+        except Exception as e:
+            restart_job(lower_bound=lower_bound, upper_bound=upper_bound)
+            logging.exception(e)
+
+        sleep(59)
 
 
-def get_clients():
+def schedule_job(lower_bound, upper_bound):
     """
-    Initializes genius client and twilio client using environment variables
-    """
-    account_sid = environ.get('TWILIO_ACCOUNT_SID')
-    auth_token = environ.get('TWILIO_AUTH_TOKEN')
-    genius_token = environ.get('GENIUS_TOKEN')
-
-    genius = lyricsgenius.Genius(genius_token)
-    twilio = Client(account_sid, auth_token)
-
-    logging.debug(f'Clients for Genius and Twilio created')
-    return genius, twilio
-
-
-def schedule_earworms(lower_bound, upper_bound):
-    """
-    Schedules recurring tasks at random intervals between the provided bounds
+    Schedules recurring tasks at random intervals between the provided
+    bounds in minutes
 
     :param int lower_bound: lower bound of interval (in minutes)
     :param int upper_bound: upper bound of interval (in minutes)
@@ -57,13 +50,18 @@ def schedule_earworms(lower_bound, upper_bound):
                                                            access_token=bitly_token,
                                                            twilio=twilio_client,
                                                            recipient=environ.get('RECIPIENT'))
-    while True:
-        try:
-            if get_availability():
-                schedule.run_pending()
-            sleep(60)
-        except Exception as e:
-            logging.exception(e)
+
+
+def restart_job(lower_bound, upper_bound):
+    """
+    In the event of an exception occurring during the execution of a job, this
+    function is called. This prevent rapid consecutive executions of the same job
+
+    :param int lower_bound: lower bound of interval (in minutes)
+    :param int upper_bound: upper bound of interval (in minutes)
+    """
+    schedule.clear()
+    schedule_job(lower_bound=lower_bound, upper_bound=upper_bound)
 
 
 def send_earworm(sheet, genius, access_token, twilio, recipient):
@@ -79,15 +77,19 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     :param Client twilio: twilio client used to send message
     :param str recipient: recipient's phone number
     """
-    logging.debug('Gathering earworm')
-    song_title, song_artist, earworm_lyrics = get_earworm(sheet)
-    original_url = get_genius_link(genius=genius,
-                                   title=song_title,
-                                   artist=song_artist)
-    short_url = shorten_link(long_url=original_url, access_token=access_token)
-    earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
-    send_sms(client=twilio, message=earworm_message, recipient=recipient)
-    send_sms(client=twilio, message=earworm_message, recipient=environ.get('MY_NUMBER'))
+    if get_availability():
+        logging.debug('Gathering earworm')
+        song_title, song_artist, earworm_lyrics = get_earworm(sheet)
+        original_url = get_genius_link(genius=genius,
+                                       title=song_title,
+                                       artist=song_artist)
+        short_url = shorten_link(long_url=original_url, access_token=access_token)
+        earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
+        send_sms(client=twilio, message=earworm_message, recipient=recipient)
+        # duplicate for testing
+        send_sms(client=twilio, message=earworm_message, recipient=environ.get('MY_NUMBER'))
+    else:
+        logging.info(f'Skipping this job as it falls outside of the specified availability window')
 
 
 def get_earworm(sheet):
@@ -191,11 +193,42 @@ def get_availability():
     return is_available
 
 
+def logger_setup():
+    """
+    Sets up logger with specified format and explicitly converts time to EDT
+    regardless of local timezone
+    """
+    logging.basicConfig(filename=f'{Path(__file__).stem}.log',
+                        level=logging.INFO,
+                        format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
+                               '<%(funcName)s>: %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.Formatter.converter = custom_time
+    logging.getLogger("twilio").setLevel(logging.WARNING)
+
+
 def custom_time(*args):
     """
     Converts local time to custom timezone (EDT)
+    This is used to convert the logging timestamps to desired timezone
+    rather than defaulting to server's local time
     """
     return get_edt_time().timetuple()
+
+
+def get_clients():
+    """
+    Initializes genius client and twilio client using environment variables
+    """
+    account_sid = environ.get('TWILIO_ACCOUNT_SID')
+    auth_token = environ.get('TWILIO_AUTH_TOKEN')
+    genius_token = environ.get('GENIUS_TOKEN')
+
+    genius = lyricsgenius.Genius(genius_token)
+    twilio = Client(account_sid, auth_token)
+
+    logging.debug(f'Clients for Genius and Twilio created')
+    return genius, twilio
 
 
 if __name__ == '__main__':
@@ -206,4 +239,4 @@ if __name__ == '__main__':
     wb = openpyxl.load_workbook(Path('./earworm_library/earworms.xlsx'))
     ws = wb.active
 
-    schedule_earworms(lower_bound=90, upper_bound=5 * 60)
+    run_schedule(lower_bound=90, upper_bound=5 * 60)
