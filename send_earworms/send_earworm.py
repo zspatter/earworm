@@ -205,6 +205,7 @@ def logger_setup():
                         datefmt='%Y-%m-%d %H:%M:%S')
     logging.Formatter.converter = custom_time
     logging.getLogger("twilio").setLevel(logging.WARNING)
+    logging.getLogger("schedule").setLevel(logging.WARNING)
 
 
 def custom_time(*args):
@@ -236,7 +237,7 @@ if __name__ == '__main__':
     genius_client, twilio_client = get_clients()
     bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
 
-    wb = openpyxl.load_workbook(Path('./earworm_library/earworms.xlsx'))
+    wb = openpyxl.load_workbook(Path('../earworm_library/earworms.xlsx'))
     ws = wb.active
 
-    run_schedule(lower_bound=90, upper_bound=5 * 60)
+    run_schedule(lower_bound=75, upper_bound=5 * 60)
