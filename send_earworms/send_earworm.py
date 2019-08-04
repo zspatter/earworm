@@ -233,8 +233,8 @@ def get_clients():
 
 if __name__ == '__main__':
     logger_setup()
-    bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
     genius_client, twilio_client = get_clients()
+    bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
 
     wb = openpyxl.load_workbook(Path('./earworm_library/earworms.xlsx'))
     ws = wb.active
