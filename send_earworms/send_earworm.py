@@ -79,10 +79,10 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     """
     if get_availability():
         logging.debug('Gathering earworm')
-        song_title, song_artist, earworm_lyrics = get_earworm(sheet)
+        song_artist, song_title, earworm_lyrics = get_earworm(sheet)
         original_url = get_genius_link(genius=genius,
-                                       title=song_title,
-                                       artist=song_artist)
+                                       artist=song_artist,
+                                       title=song_title)
         short_url = shorten_link(long_url=original_url, access_token=access_token)
         earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
         send_sms(client=twilio, message=earworm_message, recipient=recipient)
@@ -99,12 +99,12 @@ def get_earworm(sheet):
     :param Worksheet sheet: worksheet containing earworm library
     """
     row = random.randint(2, sheet.max_row)
-    title = sheet.cell(row=row, column=1).value.strip()
-    artist = sheet.cell(row=row, column=2).value.strip()
+    artist = sheet.cell(row=row, column=1).value.strip()
+    title = sheet.cell(row=row, column=2).value.strip()
     earworm = sheet.cell(row=row, column=3).value.strip()
 
     logging.info(f'{artist} - "{title}"')
-    return title, artist, earworm
+    return artist, title, earworm
 
 
 def get_genius_link(genius, title, artist):
