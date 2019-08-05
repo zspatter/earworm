@@ -107,16 +107,16 @@ def get_earworm(sheet):
     return artist, title, earworm
 
 
-def get_genius_link(genius, title, artist):
+def get_genius_link(genius, artist, title):
     """
     Uses Genius client to search for the song via artist and title query.
     Once a match is found, the url for the result is returned
 
     :param Genius genius: genius client (genius.com)
-    :param str title: name of song
     :param str artist: name of artist
+    :param str title: name of song
     """
-    url = genius.search_song(title=title, artist=artist).url
+    url = genius.search_song(artist=artist, title=title).url
 
     logging.debug(f'Genius URL for {artist} - {title}: {url}')
     return url
@@ -240,4 +240,4 @@ if __name__ == '__main__':
     wb = openpyxl.load_workbook(Path('../earworm_library/earworms.xlsx'))
     ws = wb.active
 
-    run_schedule(lower_bound=75, upper_bound=5 * 60)
+    run_schedule(lower_bound=90, upper_bound=5 * 60)
