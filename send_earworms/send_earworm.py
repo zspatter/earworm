@@ -26,7 +26,7 @@ def run_schedule(lower_bound, upper_bound):
     """
     schedule_job(lower_bound, upper_bound)
 
-    while is_available():
+    while True:
         try:
             schedule.run_pending()
         except Exception as e:
