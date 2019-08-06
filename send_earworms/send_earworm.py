@@ -214,7 +214,7 @@ def logger_setup():
                         datefmt='%Y-%m-%d %H:%M:%S')
     logging.Formatter.converter = custom_time
     logging.getLogger("twilio").setLevel(logging.WARNING)
-    logging.getLogger("schedule").setLevel(logging.WARNING)
+    logging.getLogger('schedule').propagate = False
 
 
 def custom_time(*args):
@@ -250,4 +250,4 @@ if __name__ == '__main__':
     ws = wb.active
 
     run_schedule(lower_bound=90, upper_bound=5 * 60)
-    # send_earworm(ws, genius_client, bitly_token, twilio_client, '+17654325303')
+    # send_earworm(ws, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
