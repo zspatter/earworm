@@ -95,7 +95,7 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
 def get_earworm(sheet):
     """
     Chooses random song from the library and returns the title, artist, and earworm
-    
+
     :param Worksheet sheet: worksheet containing earworm library
     """
     row = random.randint(2, sheet.max_row)
@@ -207,7 +207,7 @@ def logger_setup():
     Sets up logger with specified format and explicitly converts time to EDT
     regardless of local timezone
     """
-    logging.basicConfig(filename=f'{Path(__file__).stem}.log',
+    logging.basicConfig(filename='earworm.log',
                         level=logging.INFO,
                         format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
                                '<%(funcName)s>: %(message)s',
