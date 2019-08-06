@@ -55,7 +55,8 @@ def schedule_job(lower_bound, upper_bound):
 def restart_job(lower_bound, upper_bound):
     """
     In the event of an exception occurring during the execution of a job, this
-    function is called. This prevent rapid consecutive executions of the same job
+    function is called. This prevent rapid consecutive executions of the same job.
+    The scheduling mechanism doesn't consider a job complete if an exception is raised
 
     :param int lower_bound: lower bound of interval (in minutes)
     :param int upper_bound: upper bound of interval (in minutes)
