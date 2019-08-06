@@ -118,7 +118,7 @@ def get_genius_link(genius, artist, title):
     """
     url = genius.search_song(artist=artist, title=title).url
 
-    logging.debug(f'Genius URL for {artist} - {title}: {url}')
+    logging.info(f'Genius URL for {artist} - {title}: {url}')
     return url
 
 
@@ -174,8 +174,8 @@ def send_sms(client, message, recipient):
 
     # logs message metadata
     logging.info(f"Status: {sms.status}"
-                 f"{' Error code: ' + sms.error_code if sms.error_code else ''}"
-                 f"{' Error message: ' + sms.error_message if sms.error_message else ''}")
+                 f"{' Error code: ' + f'{sms.error_code}' if sms.error_code else ''}"
+                 f"{' Error message: ' + f'{sms.error_message}' if sms.error_message else ''}")
 
 
 def get_edt_time():
