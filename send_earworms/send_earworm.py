@@ -77,7 +77,7 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
     :param Client twilio: twilio client used to send message
     :param str recipient: recipient's phone number
     """
-    if get_availability():
+    if is_available():
         logging.debug('Gathering earworm')
         song_artist, song_title, earworm_lyrics = get_earworm(sheet)
         original_url = get_genius_link(genius=genius,
@@ -164,9 +164,18 @@ def send_sms(client, message, recipient):
     :param str message: message body
     :param str recipient: recipient's phone number
     """
+    # sends payload
     sender = environ.get('TWILIO_NUMBER')
-    client.messages.create(body=message, from_=sender, to=recipient)
-    logging.info(f'Earworm sent to recipient')
+    sms = client.messages.create(body=message, from_=sender, to=recipient)
+
+    # waits and fetches metadata of transmitted message
+    sleep(2)
+    sms = client.messages.get(sms.sid).fetch()
+
+    # logs message metadata
+    logging.info(f"Status: {sms.status}"
+                 f"{' Error code: ' + sms.error_code if sms.error_code else ''}"
+                 f"{' Error message: ' + sms.error_message if sms.error_message else ''}")
 
 
 def get_edt_time():
@@ -181,16 +190,16 @@ def get_edt_time():
     return edt_dt
 
 
-def get_availability():
+def is_available():
     """
     Checks if current time is within availability range
     """
     start = time(hour=9, minute=0, second=0, tzinfo=timezone('US/Eastern'))
     end = time(hour=23, minute=0, second=0, tzinfo=timezone('US/Eastern'))
-    is_available = start <= get_edt_time().time() <= end
+    availability = start <= get_edt_time().time() <= end
 
-    logging.debug(f'Current time is{"" if is_available else " not"} within availability range')
-    return is_available
+    logging.debug(f'Current time is{"" if availability else " not"} within availability range')
+    return availability
 
 
 def logger_setup():
@@ -241,3 +250,4 @@ if __name__ == '__main__':
     ws = wb.active
 
     run_schedule(lower_bound=90, upper_bound=5 * 60)
+    # send_earworm(ws, genius_client, bitly_token, twilio_client, '+17654325303')
