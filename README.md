@@ -1,7 +1,7 @@
 # earworms
-A program designed to send catchy lyrics in an attempt to get the song stuck in the recipient's head.
+This program is designed to send catchy lyrics in an attempt to get songs stuck in the recipient's head.
 
-This script chooses a random song from a predefined library of earworms. Once the song is chosen, the link to the song's page on [genius.com](https://genius.com/) is gathered. This link is then shortened using bit.ly, and finally the earworm and link are combined into a single message and sent over SMS via a twilio client. 
+This script chooses a random song from a predefined library of [earworms](https://en.wikipedia.org/wiki/Earworm). Once the song is chosen, the link to the song's lyrics page on [Genius](https://genius.com/) is gathered. This link is then shortened using [Bitly](https://bitly.com/), and finally the earworm and the shortened link are combined into a single message which is then sent over SMS via a [Twilio](https://www.twilio.com/) client. 
 
 ## Sample Earworm Message
 <p align=center>
