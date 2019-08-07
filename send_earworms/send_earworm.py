@@ -65,21 +65,24 @@ def restart_job(lower_bound, upper_bound):
     schedule_job(lower_bound=lower_bound, upper_bound=upper_bound)
 
 
-def send_earworm(sheet, genius, access_token, twilio, recipient):
+def send_earworm(path, genius, access_token, twilio, recipient):
     """
     Using the provided earworm library, a random song is chosen. Then, the genius
     client gathers the url to the lyrics for said song. After the full link is
     retrieved, the link is shortened using bitly. Finally, the earworm message
     is created and sent to the given recipient over SMS via the twilio client
 
-    :param Worksheet sheet: library of send_earworms
+    :param Path path: path to library of earworms
     :param Genius genius: genius client (genius.com)
     :param dict access_token: access token for bitly
     :param Client twilio: twilio client used to send message
     :param str recipient: recipient's phone number
     """
     if is_available():
-        logging.debug('Gathering earworm')
+        logging.debug('Gathering earworm...')
+        wb = openpyxl.load_workbook(filename=path, read_only=True)
+        sheet = wb.active
+
         song_artist, song_title, earworm_lyrics = get_earworm(sheet)
         original_url = get_genius_link(genius=genius,
                                        artist=song_artist,
@@ -89,6 +92,7 @@ def send_earworm(sheet, genius, access_token, twilio, recipient):
         send_sms(client=twilio, message=earworm_message, recipient=recipient)
         # duplicate for testing
         send_sms(client=twilio, message=earworm_message, recipient=environ.get('MY_NUMBER'))
+        wb.close()
     else:
         logging.info(f'Skipping this job as it falls outside of the specified availability window')
 
@@ -247,8 +251,7 @@ if __name__ == '__main__':
     genius_client, twilio_client = get_clients()
     bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
 
-    wb = openpyxl.load_workbook(Path('../earworm_library/earworms.xlsx'))
-    ws = wb.active
+    excel_path = Path('../earworm_library/earworms.xlsx')
 
     run_schedule(lower_bound=90, upper_bound=5 * 60)
-    # send_earworm(ws, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
+    # send_earworm(excel_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
