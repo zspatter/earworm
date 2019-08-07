@@ -253,5 +253,5 @@ if __name__ == '__main__':
 
     db_path = Path('../earworm_library/music_library.db')
 
-    # run_schedule(lower_bound=90, upper_bound=5 * 60)
-    send_earworm(db_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
+    run_schedule(lower_bound=90, upper_bound=5 * 60)
+    # send_earworm(db_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
