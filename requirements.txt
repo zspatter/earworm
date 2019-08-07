@@ -1,6 +1,5 @@
 lyricsgenius
 pyshorteners
 twilio
-openpyxl
 pytz
 schedule
