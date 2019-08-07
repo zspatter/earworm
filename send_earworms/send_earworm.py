@@ -44,7 +44,7 @@ def schedule_job(lower_bound, upper_bound):
     :param int upper_bound: upper bound of interval (in minutes)
     """
     schedule.every(lower_bound).to(upper_bound).minutes.do(send_earworm,
-                                                           sheet=ws,
+                                                           path=db_path,
                                                            genius=genius_client,
                                                            access_token=bitly_token,
                                                            twilio=twilio_client,
