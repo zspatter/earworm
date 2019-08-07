@@ -1,14 +1,13 @@
 #! /usr/bin/python3
 
 import logging
-import random
+import sqlite3
 from datetime import datetime, time
 from os import environ
 from pathlib import Path
 from time import sleep
 
 import lyricsgenius
-import openpyxl
 import schedule
 from pyshorteners import Shortener, Shorteners
 from pytz import timezone, utc
@@ -72,7 +71,7 @@ def send_earworm(path, genius, access_token, twilio, recipient):
     retrieved, the link is shortened using bitly. Finally, the earworm message
     is created and sent to the given recipient over SMS via the twilio client
 
-    :param Path path: path to library of earworms
+    :param Path path: path to music library
     :param Genius genius: genius client (genius.com)
     :param dict access_token: access token for bitly
     :param Client twilio: twilio client used to send message
@@ -80,10 +79,8 @@ def send_earworm(path, genius, access_token, twilio, recipient):
     """
     if is_available():
         logging.debug('Gathering earworm...')
-        wb = openpyxl.load_workbook(filename=path, read_only=True)
-        sheet = wb.active
 
-        song_artist, song_title, earworm_lyrics = get_earworm(sheet)
+        song_artist, song_title, earworm_lyrics = get_earworm(path=path)
         original_url = get_genius_link(genius=genius,
                                        artist=song_artist,
                                        title=song_title)
@@ -92,23 +89,26 @@ def send_earworm(path, genius, access_token, twilio, recipient):
         send_sms(client=twilio, message=earworm_message, recipient=recipient)
         # duplicate for testing
         send_sms(client=twilio, message=earworm_message, recipient=environ.get('MY_NUMBER'))
-        wb.close()
     else:
         logging.info(f'Skipping this job as it falls outside of the specified availability window')
 
 
-def get_earworm(sheet):
+def get_earworm(path):
     """
     Chooses random song from the library and returns the title, artist, and earworm
 
-    :param Worksheet sheet: worksheet containing earworm library
+    :param Path path: path to SQLite database
     """
-    row = random.randint(2, sheet.max_row)
-    artist = sheet.cell(row=row, column=1).value.strip()
-    title = sheet.cell(row=row, column=2).value.strip()
-    earworm = sheet.cell(row=row, column=3).value.strip()
+    # accesses SQLite database at path
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
 
+    # gathers random entry
+    cursor.execute('SELECT Artist, Title, Earworm FROM earworms ORDER BY RANDOM() LIMIT 1')
+    artist, title, earworm = cursor.fetchone()
+    connection.close()
     logging.info(f'{artist} - "{title}"')
+
     return artist, title, earworm
 
 
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     genius_client, twilio_client = get_clients()
     bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
 
-    excel_path = Path('../earworm_library/earworms.xlsx')
+    db_path = Path('../earworm_library/music_library.db')
 
-    run_schedule(lower_bound=90, upper_bound=5 * 60)
-    # send_earworm(excel_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
+    # run_schedule(lower_bound=90, upper_bound=5 * 60)
+    send_earworm(db_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
