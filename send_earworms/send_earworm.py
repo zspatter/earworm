@@ -100,7 +100,7 @@ def get_earworm(path):
     :param Path path: path to SQLite database
     """
     # accesses SQLite database at path
-    connection = sqlite3.connect(path)
+    connection = sqlite3.connect(str(path))
     cursor = connection.cursor()
 
     # gathers random entry
@@ -152,9 +152,9 @@ def build_message(lyrics, url, emoji='🎶🎵🎶'):
     :param str emoji: emojis to pad earworm text with
     """
     earworm = f'{emoji}' \
-        f'\n{lyrics}' \
-        f'\n{emoji}' \
-        f'\n{url}'
+              f'\n{lyrics}' \
+              f'\n{emoji}' \
+              f'\n{url}'
 
     logging.debug(f'Earworm message: \n"{earworm}"')
     return earworm
