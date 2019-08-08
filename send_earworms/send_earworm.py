@@ -123,7 +123,7 @@ def get_genius_link(genius, artist, title):
     """
     url = genius.search_song(artist=artist, title=title).url
 
-    logging.info(f'Genius URL for {artist} - {title}: {url}')
+    logging.info(f'Genius URL for {artist} - "{title}": {url}')
     return url
 
 
