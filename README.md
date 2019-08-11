@@ -7,3 +7,13 @@ This script chooses a random song from a predefined library of [earworms](https:
 <p align=center>
   <img src=./sample_message.jpeg alt=sample earworm message height=750>
 </p>
+
+## Configuration
+This program uses several environment variables to store data for the various services used (such as API keys and auth tokens). These variables must be set before executing the program.
+
+- `BITLY_TOKEN` - Bitly access token
+- `TWILIO_NUMBER` - Twilio phone number (number messages will be sent from)
+- `TWILIO_ACCOUNT_SID` - Twilio account SID (used to exercise the REST API)
+- `TWILIO_AUTH_TOKEN` - Twilio auth token
+- `GENIUS_TOKEN` - Genius access token
+- `RECIPIENT` - Phone number for desired recipient
