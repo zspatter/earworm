@@ -14,7 +14,7 @@ from pytz import timezone, utc
 from twilio.rest import Client
 
 
-def run_schedule(lower_bound, upper_bound):
+def run_schedule(lower_bound, upper_bound, path, recipient):
     """
     Executes scheduled jobs when jobs are available. If an exception is
     encountered, the details are logged and the job queue is cancelled and
@@ -22,36 +22,49 @@ def run_schedule(lower_bound, upper_bound):
 
     :param int lower_bound: lower bound of interval (in minutes)
     :param int upper_bound: upper bound of interval (in minutes)
+    :param Path path: path to database
+    :param str recipient: phone number for recipient
     """
-    schedule_job(lower_bound, upper_bound)
+    schedule_job(lower_bound=lower_bound,
+                 upper_bound=upper_bound,
+                 path=path,
+                 recipient=recipient)
 
     while True:
         try:
             schedule.run_pending()
         except Exception as e:
-            restart_job(lower_bound=lower_bound, upper_bound=upper_bound)
+            restart_job(lower_bound=lower_bound,
+                        upper_bound=upper_bound,
+                        path=path,
+                        recipient=recipient)
             logging.exception(e)
 
         sleep(59)
 
 
-def schedule_job(lower_bound, upper_bound):
+def schedule_job(lower_bound, upper_bound, path, recipient):
     """
     Schedules recurring tasks at random intervals between the provided
     bounds in minutes
 
     :param int lower_bound: lower bound of interval (in minutes)
     :param int upper_bound: upper bound of interval (in minutes)
+    :param Path path: path to database
+    :param str recipient: phone number for recipient
     """
+    bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
+    genius, twilio = get_clients()
+
     schedule.every(lower_bound).to(upper_bound).minutes.do(send_earworm,
-                                                           path=db_path,
-                                                           genius=genius_client,
+                                                           path=path,
+                                                           genius=genius,
                                                            access_token=bitly_token,
-                                                           twilio=twilio_client,
-                                                           recipient=environ.get('RECIPIENT'))
+                                                           twilio=twilio,
+                                                           recipient=recipient)
 
 
-def restart_job(lower_bound, upper_bound):
+def restart_job(lower_bound, upper_bound, path, recipient):
     """
     In the event of an exception occurring during the execution of a job, this
     function is called. This prevent rapid consecutive executions of the same job.
@@ -59,9 +72,14 @@ def restart_job(lower_bound, upper_bound):
 
     :param int lower_bound: lower bound of interval (in minutes)
     :param int upper_bound: upper bound of interval (in minutes)
+    :param Path path: path to database
+    :param str recipient: phone number for recipient
     """
     schedule.clear()
-    schedule_job(lower_bound=lower_bound, upper_bound=upper_bound)
+    schedule_job(lower_bound=lower_bound,
+                 upper_bound=upper_bound,
+                 path=path,
+                 recipient=recipient)
 
 
 def send_earworm(path, genius, access_token, twilio, recipient):
@@ -84,7 +102,8 @@ def send_earworm(path, genius, access_token, twilio, recipient):
         original_url = get_genius_link(genius=genius,
                                        artist=song_artist,
                                        title=song_title)
-        short_url = shorten_link(long_url=original_url, access_token=access_token)
+        short_url = shorten_link(long_url=original_url,
+                                 access_token=access_token)
         earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
         send_sms(client=twilio, message=earworm_message, recipient=recipient)
         # duplicate for testing
@@ -207,21 +226,6 @@ def is_available():
     return availability
 
 
-def logger_setup():
-    """
-    Sets up logger with specified format and explicitly converts time to EDT
-    regardless of local timezone
-    """
-    logging.basicConfig(filename='earworm.log',
-                        level=logging.INFO,
-                        format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
-                               '<%(funcName)s>: %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
-    logging.Formatter.converter = custom_time
-    logging.getLogger("twilio").setLevel(logging.WARNING)
-    logging.getLogger('schedule').propagate = False
-
-
 def custom_time(*args):
     """
     Converts local time to custom timezone (EDT)
@@ -246,12 +250,29 @@ def get_clients():
     return genius, twilio
 
 
+def logger_setup():
+    """
+    Sets up logger with specified format and explicitly converts time to EDT
+    regardless of local timezone
+    """
+    logging.basicConfig(filename='earworm.log',
+                        level=logging.INFO,
+                        format=' %(asctime)s.%(msecs)03d - %(levelname)s - '
+                               '<%(funcName)s>: %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.Formatter.converter = custom_time
+    logging.getLogger("twilio").setLevel(logging.WARNING)
+    logging.getLogger('schedule').propagate = False
+
+
 if __name__ == '__main__':
     logger_setup()
-    genius_client, twilio_client = get_clients()
-    bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
-
     db_path = Path('../earworm_library/music_library.db')
+    run_schedule(lower_bound=90,
+                 upper_bound=5 * 60,
+                 path=db_path,
+                 recipient=environ.get('RECIPIENT'))
 
-    run_schedule(lower_bound=90, upper_bound=5 * 60)
+    # genius_client, twilio_client = get_clients()
+    # bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
     # send_earworm(db_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
