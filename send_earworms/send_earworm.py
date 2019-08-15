@@ -106,8 +106,6 @@ def send_earworm(path, genius, access_token, twilio, recipient):
                                  access_token=access_token)
         earworm_message = build_message(lyrics=earworm_lyrics, url=short_url)
         send_sms(client=twilio, message=earworm_message, recipient=recipient)
-        # duplicate for testing
-        send_sms(client=twilio, message=earworm_message, recipient=environ.get('MY_NUMBER'))
     else:
         logging.info(f'Skipping this job as it falls outside of the specified availability window')
 
@@ -272,7 +270,3 @@ if __name__ == '__main__':
                  upper_bound=5 * 60,
                  path=db_path,
                  recipient=environ.get('RECIPIENT'))
-
-    # genius_client, twilio_client = get_clients()
-    # bitly_token = {'bitly_token': environ.get('BITLY_TOKEN')}
-    # send_earworm(db_path, genius_client, bitly_token, twilio_client, environ.get('MY_NUMBER'))
